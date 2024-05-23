@@ -5,7 +5,7 @@ use spl_associated_token_account;
 declare_id!("2zUiVTAqWHxn7BT3FPcn4L3BNezeUoyKpGuqCbxHjPdp");
 
 #[program]
-pub mod my_ai_payment {
+pub mod myaipayment {
     use super::*;
 
     pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
@@ -60,7 +60,7 @@ pub mod my_ai_payment {
             &dev_wallets[0],
             &payment.token,
         );
-        payment.dev_wallets[0] = spl_associated_token_account::get_associated_token_address(
+        payment.dev_wallets[1] = spl_associated_token_account::get_associated_token_address(
             &dev_wallets[1],
             &payment.token,
         );
@@ -98,11 +98,11 @@ pub mod my_ai_payment {
             ErrorCode::InvalidTreasuryTokenAccount
         );
         require!(
-            treasury_wallet_token_account.key() == payment.dev_wallets[0],
+            dev_wallet_1_token_account.key() == payment.dev_wallets[0],
             ErrorCode::InvalidDevTokenAccount
         );
         require!(
-            treasury_wallet_token_account.key() == payment.dev_wallets[1],
+            dev_wallet_2_token_account.key() == payment.dev_wallets[1],
             ErrorCode::InvalidDevTokenAccount
         );
 
@@ -145,8 +145,8 @@ pub mod my_ai_payment {
 
 #[derive(Accounts)]
 pub struct Initialize<'info> {
-    #[account(init, payer = admin, space = 8 + 32)]
-    pub payment: Account<'info, MyAIPayment>,
+    #[account(init, payer = admin, space = 173)]
+    pub payment: Account<'info, MyAiPayment>,
     #[account(mut)]
     pub admin: Signer<'info>,
     pub system_program: Program<'info, System>,
@@ -155,42 +155,42 @@ pub struct Initialize<'info> {
 #[derive(Accounts)]
 pub struct SetAdmin<'info> {
     #[account(mut)]
-    pub payment: Account<'info, MyAIPayment>,
+    pub payment: Account<'info, MyAiPayment>,
     pub admin: Signer<'info>,
 }
 
 #[derive(Accounts)]
 pub struct SetTokenAddress<'info> {
     #[account(mut)]
-    pub payment: Account<'info, MyAIPayment>,
+    pub payment: Account<'info, MyAiPayment>,
     pub admin: Signer<'info>,
 }
 
 #[derive(Accounts)]
 pub struct SetTreasuryWallet<'info> {
     #[account(mut)]
-    pub payment: Account<'info, MyAIPayment>,
+    pub payment: Account<'info, MyAiPayment>,
     pub admin: Signer<'info>,
 }
 
 #[derive(Accounts)]
 pub struct SetDevWallets<'info> {
     #[account(mut)]
-    pub payment: Account<'info, MyAIPayment>,
+    pub payment: Account<'info, MyAiPayment>,
     pub admin: Signer<'info>,
 }
 
 #[derive(Accounts)]
 pub struct SetDevFees<'info> {
     #[account(mut)]
-    pub payment: Account<'info, MyAIPayment>,
+    pub payment: Account<'info, MyAiPayment>,
     pub admin: Signer<'info>,
 }
 
 #[derive(Accounts)]
 pub struct SetPause<'info> {
     #[account(mut)]
-    pub payment: Account<'info, MyAIPayment>,
+    pub payment: Account<'info, MyAiPayment>,
     pub admin: Signer<'info>,
 }
 
@@ -199,7 +199,7 @@ pub struct SendToken<'info> {
     #[account(mut)]
     pub payer: Signer<'info>,
     #[account(mut)]
-    pub payment: Account<'info, MyAIPayment>,
+    pub payment: Account<'info, MyAiPayment>,
     #[account(mut)]
     pub payer_token_account: Account<'info, TokenAccount>,
     #[account(mut)]
@@ -212,7 +212,7 @@ pub struct SendToken<'info> {
 }
 
 #[account]
-pub struct MyAIPayment {
+pub struct MyAiPayment {
     pub admin: Pubkey,
     pub token: Pubkey,
     pub paused: bool,
