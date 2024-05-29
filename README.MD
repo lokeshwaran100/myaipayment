@@ -1,0 +1,17 @@
+spl-token create-token
+
+spl-token supply ExwSdKk455aTyJ6poApJ4gVCrS57vyexGDDc6qeGGPob
+
+spl-token create-account ExwSdKk455aTyJ6poApJ4gVCrS57vyexGDDc6qeGGPob
+
+# 9VgPnbr9M98Ze5cRaU4J7rsFRmsw3VnZjFaXAbeNFZ42
+
+spl-token balance ExwSdKk455aTyJ6poApJ4gVCrS57vyexGDDc6qeGGPob
+
+spl-token mint ExwSdKk455aTyJ6poApJ4gVCrS57vyexGDDc6qeGGPob 10000
+
+spl-token accounts
+
+
+spl-token create-account ExwSdKk455aTyJ6poApJ4gVCrS57vyexGDDc6qeGGPob => 448CuwkJh1Z2yzQH4dT7Ae6pHw2ZSx1HZ8wXVs4Pp2Rw
+spl-token mint ExwSdKk455aTyJ6poApJ4gVCrS57vyexGDDc6qeGGPob 100 448CuwkJh1Z2yzQH4dT7Ae6pHw2ZSx1HZ8wXVs4Pp2Rw
