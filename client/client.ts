@@ -91,6 +91,7 @@ async function initialize_payment() {
     signers: [admin.keypair, paymentAccount],
   });
 
+  sleep(2000);
   await display("After initialization");
   await displayPda();
 }

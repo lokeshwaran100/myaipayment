@@ -12,6 +12,7 @@ pub mod myaipayment {
         let payment = &mut ctx.accounts.payment;
         let admin = &mut ctx.accounts.admin;
         payment.admin = admin.key();
+        payment.paused = false;
         Ok(())
     }
 
@@ -89,6 +90,8 @@ pub mod myaipayment {
 
     pub fn send_token(ctx: Context<SendToken>, amount: u64) -> Result<()> {
         let payment = &mut ctx.accounts.payment;
+
+        require!(!payment.paused, ErrorCode::PaymentPaused);
 
         let treasury_wallet_token_account = &mut ctx.accounts.treasury_wallet_token_account;
         let dev_wallet_1_token_account = &mut ctx.accounts.dev_wallet_1_token_account;
@@ -231,4 +234,7 @@ pub enum ErrorCode {
 
     #[msg("Invalid dev token account.")]
     InvalidDevTokenAccount,
+
+    #[msg("Payment is paused by admin.")]
+    PaymentPaused,
 }
