@@ -19,7 +19,7 @@ import {
   useDisclosure
 } from '@chakra-ui/react'
 import { useCallback, useState, useEffect } from 'react'
-import { useAccount, useNetwork, useSigner } from 'wagmi';
+// import { useAccount, useNetwork, useSigner } from 'wagmi';
 import axios from 'axios';
 import { now } from 'moment';
 import { toast } from 'react-toastify';
@@ -33,7 +33,9 @@ import contractAbi from '../../assets/abis/MyAIPayment-abi.json';
 import * as anchor from '@project-serum/anchor';
 import { TOKEN_PROGRAM_ID, createAssociatedTokenAccount } from '@solana/spl-token';
 import { Connection, PublicKey, Keypair } from '@solana/web3.js';
-
+import { useMemo } from "react";
+import { useConnection,useWallet,useAnchorWallet } from "@solana/wallet-adapter-react";
+const bs58 = require('bs58');
 
 
 export type BuyModalProps = {
@@ -43,19 +45,19 @@ export type BuyModalProps = {
   // announceLogo: string,
 }
 
-const owner: Keypair = new Keypair();
-const provider = anchor.getProvider();
+// const owner: Keypair = new Keypair();
+// const provider = anchor.getProvider();
 
-const connection: Connection = new Connection(
-  "https://api.devnet.solana.com",
-  "confirmed");
-const idl = JSON.parse(
-  require("fs").readFileSync("../../assets/idls/MyAIPayment.json", "utf8")
-);
-const programId = new PublicKey("2zUiVTAqWHxn7BT3FPcn4L3BNezeUoyKpGuqCbxHjPdp");
-const program = new anchor.Program(idl, programId, provider);
+// const connection: Connection = new Connection(
+//   "https://api.devnet.solana.com",
+//   "confirmed");
+// const idl = JSON.parse(
+//   require("fs").readFileSync("../../assets/idls/MyAIPayment.json", "utf8")
+// );
+// const programId = new PublicKey("2zUiVTAqWHxn7BT3FPcn4L3BNezeUoyKpGuqCbxHjPdp");
+// const program = new anchor.Program(idl, programId, provider);
 
-export const getTokenAccount = async (addr: PublicKey) => {
+export const getTokenAccount = async (addr: PublicKey, owner: Keypair, connection: Connection) => {
   const TOKEN_MINT = new PublicKey("ExwSdKk455aTyJ6poApJ4gVCrS57vyexGDDc6qeGGPob");
   const tokenList = await connection.getTokenAccountsByOwner(addr, { mint: TOKEN_MINT });
 
@@ -66,30 +68,47 @@ export const getTokenAccount = async (addr: PublicKey) => {
   }
 };
 
-const sendToken = async (depositAmount: number) => {
-  const payer = new Keypair();
-  const paymentAccount = new PublicKey("");
-  const treasuryWallet = new PublicKey("");
-  const devWallet01 = new PublicKey("");
-  const devWallet02 = new PublicKey("");
+const sendToken = async (depositAmount: number, payer: PublicKey, program: anchor.Program, owner: Keypair, connection: Connection) => {
+  console.log("Send Token")
+  // const payer = new Keypair();
+  
+  const paymentAccount = new PublicKey("GrteAK88ss17dWJTitMCS18ijZvZJcBgM59xVFJVQd5k");
+  const treasuryWallet = new PublicKey("8Q9M9PNQP33EfHcyqueBub23z4bsAQjZn4UJ8vbeXCaj");
+  const devWallet01 = new PublicKey("4LiaNzv7uK7mQqquBN9z7qkQ3LgH8vYg8nCapUAWuZ5A");
+  const devWallet02 = new PublicKey("9chrXAxNB99xa5R9AkoTT6Ft17G98c9Vt8BFtBH3heJU");
 
-  const txSignature = await program.rpc.sendToken(
-    new anchor.BN(depositAmount),
-    {
-      accounts: {
-        payer: payer.publicKey,
-        payment: paymentAccount,
-        payerTokenAccount: await getTokenAccount(payer.publicKey),
-        treasuryWalletTokenAccount: await getTokenAccount(treasuryWallet),
-        devWallet1TokenAccount: await getTokenAccount(devWallet01),
-        devWallet2TokenAccount: await getTokenAccount(devWallet02),
-        tokenProgram: TOKEN_PROGRAM_ID,
-      },
-      signers: [payer],
-    }
-  );
+  const tx = await program.methods
+                .sendToken(new anchor.BN(depositAmount))
+                .accounts({
+                        payer: payer,
+                        payment: paymentAccount,
+                        payerTokenAccount: await getTokenAccount(payer, owner, connection),
+                        treasuryWalletTokenAccount: await getTokenAccount(treasuryWallet, owner, connection),
+                        devWallet1TokenAccount: await getTokenAccount(devWallet01, owner, connection),
+                        devWallet2TokenAccount: await getTokenAccount(devWallet02, owner, connection),
+                        tokenProgram: TOKEN_PROGRAM_ID,
+                })
+                .rpc();
 
-  await connection.getTransaction(txSignature, { commitment: 'confirmed' });
+                console.log(tx)
+
+  // const txSignature = await program.rpc.sendToken(
+  //   new anchor.BN(depositAmount),
+  //   {
+  //     accounts: {
+  //       payer: payer.publicKey,
+  //       payment: paymentAccount,
+  //       payerTokenAccount: await getTokenAccount(payer.publicKey, owner, connection),
+  //       treasuryWalletTokenAccount: await getTokenAccount(treasuryWallet, owner, connection),
+  //       devWallet1TokenAccount: await getTokenAccount(devWallet01, owner, connection),
+  //       devWallet2TokenAccount: await getTokenAccount(devWallet02, owner, connection),
+  //       tokenProgram: TOKEN_PROGRAM_ID,
+  //     },
+  //     signers: [payer],
+  //   }
+  // );
+
+  // await connection.getTransaction(txSignature, { commitment: 'confirmed' });
   console.log('Token sent successfully');
 };
 
@@ -99,13 +118,35 @@ const BuyModal = ({
   // announceText,
   // announceLogo,
 }: BuyModalProps) => {
-  const { chain } = useNetwork();
-  const { data: signer } = useSigner();
+  // to connect to the smart contracts
+  const {connection}=useConnection();
+  const {publicKey}=useWallet();
+  const anchorwallet=useAnchorWallet();
+  console.log(publicKey?.toString())
+
+  const idl: anchor.Idl={"version":"0.1.0","name":"myaipayment","instructions":[{"name":"initialize","accounts":[{"name":"payment","isMut":true,"isSigner":true},{"name":"admin","isMut":true,"isSigner":true},{"name":"systemProgram","isMut":false,"isSigner":false}],"args":[]},{"name":"setAdmin","accounts":[{"name":"payment","isMut":true,"isSigner":false},{"name":"admin","isMut":false,"isSigner":true}],"args":[{"name":"newAdmin","type":"publicKey"}]},{"name":"setTokenAddress","accounts":[{"name":"payment","isMut":true,"isSigner":false},{"name":"admin","isMut":false,"isSigner":true}],"args":[{"name":"token","type":"publicKey"}]},{"name":"setTreasuryWallet","accounts":[{"name":"payment","isMut":true,"isSigner":false},{"name":"admin","isMut":false,"isSigner":true}],"args":[{"name":"treasuryWallet","type":"publicKey"}]},{"name":"setDevWallets","accounts":[{"name":"payment","isMut":true,"isSigner":false},{"name":"admin","isMut":false,"isSigner":true}],"args":[{"name":"devWallets","type":{"array":["publicKey",2]}}]},{"name":"setDevFees","accounts":[{"name":"payment","isMut":true,"isSigner":false},{"name":"admin","isMut":false,"isSigner":true}],"args":[{"name":"devFees","type":{"array":["u16",2]}}]},{"name":"setPause","accounts":[{"name":"payment","isMut":true,"isSigner":false},{"name":"admin","isMut":false,"isSigner":true}],"args":[{"name":"paused","type":"bool"}]},{"name":"sendToken","accounts":[{"name":"payer","isMut":true,"isSigner":true},{"name":"payment","isMut":true,"isSigner":false},{"name":"payerTokenAccount","isMut":true,"isSigner":false},{"name":"treasuryWalletTokenAccount","isMut":true,"isSigner":false},{"name":"devWallet1TokenAccount","isMut":true,"isSigner":false},{"name":"devWallet2TokenAccount","isMut":true,"isSigner":false},{"name":"tokenProgram","isMut":false,"isSigner":false}],"args":[{"name":"amount","type":"u64"}]}],"accounts":[{"name":"MyAiPayment","type":{"kind":"struct","fields":[{"name":"admin","type":"publicKey"},{"name":"token","type":"publicKey"},{"name":"paused","type":"bool"},{"name":"treasuryWallet","type":"publicKey"},{"name":"devWallets","type":{"array":["publicKey",2]}},{"name":"devFees","type":{"array":["u16",2]}}]}}],"errors":[{"code":6000,"name":"Unauthorized","msg":"The requested operation is not authorized."},{"code":6001,"name":"InvalidTreasuryTokenAccount","msg":"Invalid treasury token account."},{"code":6002,"name":"InvalidDevTokenAccount","msg":"Invalid dev token account."},{"code":6003,"name":"PaymentPaused","msg":"Payment is paused by admin."}]};
+
+  const base58PrivateKey = '3RqwVS5N8gvxfFVP9RJ37sY5yd8LTi6bGMxQUceBpmNdHaU4ePsSPR5zvUhagJVy6GqqMvANotdSYSmHVSkHNXcD';
+  // Decode the base58 private key to a Uint8Array
+  const privateKey = bs58.decode(base58PrivateKey);
+  // Create a Keypair from the secret key
+  const owner = Keypair.fromSecretKey(privateKey);
+
+  // a program which will connect to the smart contract
+  const program=useMemo(()=>{
+      if(anchorwallet){
+          const provider=new anchor.AnchorProvider(connection,anchorwallet,anchor.AnchorProvider.defaultOptions())
+          return new anchor.Program(idl,new PublicKey("2zUiVTAqWHxn7BT3FPcn4L3BNezeUoyKpGuqCbxHjPdp"),provider)
+      }
+      return null;
+  },[connection,anchorwallet]);
+  // const { chain } = useNetwork();
+  // const { data: signer } = useSigner();
   const [payOption, setPayOption] = useState('4');
   const [imageNum, setImageNum] = useState(10);
   const [chatTime, setChatTime] = useState(1);
   const [price, setPrice] = useState(100);
-  const { address, } = useAccount();
+  // const { address, } = useAccount();
   const [isApproved, setIsApproved] = useState(false);
   const {
     isBuy,
@@ -133,7 +174,7 @@ const BuyModal = ({
   }, [])
 
   const getExpireDate = async () => {
-    let params = { wallet_address: address };
+    let params = { wallet_address: publicKey?.toString() };
     const response = (await axios.post("/api/account_info/get", params)).data;
     console.log("response: ", response);
 
@@ -153,68 +194,72 @@ const BuyModal = ({
   }
 
   const handleApprove = async () => {
-    if (chain?.id == undefined || chain?.id !=
-      (process.env.NEXT_PUBLIC_MAINNET_OR_TESTNET == "mainnet" ? bscMainnetChainId : bscTestnetChainId)) {
-      toast.error('Please switch your chain');
-      return;
-    }
-
-    const chainId = chain?.id ?? (process.env.NEXT_PUBLIC_MAINNET_OR_TESTNET == "mainnet" ? bscMainnetChainId : bscTestnetChainId);
-    try {
-      const tokenContractAddress = (tokenAddresses as any)[chainId];
-      const contractAddress = (contractAddresses as any)[chainId];
-
-      console.log("tokenContractAddress: ", tokenContractAddress);
-      console.log("contractAddress: ", contractAddress);
-      console.log("price: ", ethers.BigNumber.from(price).mul((ethers.BigNumber.from(10)).pow(9)).toString())
-
-      // approve
-      const tokenContract = new ethers.Contract(
-        tokenContractAddress,
-        tokenContractAbi,
-        (signer?.provider as any)?.getSigner()
-      );
-      let tx = await tokenContract.approve(
-        contractAddress,
-        ethers.BigNumber.from(price).mul((ethers.BigNumber.from(10)).pow(9)).toString(),
-      );
-      await tx.wait();
-      console.log('Approve success');
       setIsApproved(true);
-      toast.success('Approve success. Please click Buy Button');
-    } catch (e) {
-      console.log("error happened in approve: ", e);
-    }
+    // if (chain?.id == undefined || chain?.id !=
+    //   (process.env.NEXT_PUBLIC_MAINNET_OR_TESTNET == "mainnet" ? bscMainnetChainId : bscTestnetChainId)) {
+    //   toast.error('Please switch your chain');
+    //   return;
+    // }
+
+    // const chainId = chain?.id ?? (process.env.NEXT_PUBLIC_MAINNET_OR_TESTNET == "mainnet" ? bscMainnetChainId : bscTestnetChainId);
+    // try {
+    //   const tokenContractAddress = (tokenAddresses as any)[chainId];
+    //   const contractAddress = (contractAddresses as any)[chainId];
+
+    //   console.log("tokenContractAddress: ", tokenContractAddress);
+    //   console.log("contractAddress: ", contractAddress);
+    //   console.log("price: ", ethers.BigNumber.from(price).mul((ethers.BigNumber.from(10)).pow(9)).toString())
+
+    //   // approve
+    //   const tokenContract = new ethers.Contract(
+    //     tokenContractAddress,
+    //     tokenContractAbi,
+    //     (signer?.provider as any)?.getSigner()
+    //   );
+    //   let tx = await tokenContract.approve(
+    //     contractAddress,
+    //     ethers.BigNumber.from(price).mul((ethers.BigNumber.from(10)).pow(9)).toString(),
+    //   );
+    //   await tx.wait();
+    //   console.log('Approve success');
+    //   setIsApproved(true);
+    //   toast.success('Approve success. Please click Buy Button');
+    // } catch (e) {
+    //   console.log("error happened in approve: ", e);
+    // }
   }
 
   const handleBuy = async () => {
-    if (chain?.id == undefined || chain?.id !=
-      (process.env.NEXT_PUBLIC_MAINNET_OR_TESTNET == "mainnet" ? bscMainnetChainId : bscTestnetChainId)) {
-      toast.error('Please switch your chain');
-      return;
-    }
-    if (!isApproved) {
-      toast.error('Please click approve button at first');
-      return;
-    }
+    // if (chain?.id == undefined || chain?.id !=
+    //   (process.env.NEXT_PUBLIC_MAINNET_OR_TESTNET == "mainnet" ? bscMainnetChainId : bscTestnetChainId)) {
+    //   toast.error('Please switch your chain');
+    //   return;
+    // }
+    // if (!isApproved) {
+    //   toast.error('Please click approve button at first');
+    //   return;
+    // }
 
-    const chainId = chain?.id ?? (process.env.NEXT_PUBLIC_MAINNET_OR_TESTNET == "mainnet" ? bscMainnetChainId : bscTestnetChainId);
+    // const chainId = chain?.id ?? (process.env.NEXT_PUBLIC_MAINNET_OR_TESTNET == "mainnet" ? bscMainnetChainId : bscTestnetChainId);
     try {
       // buy
-      const contractAddress = (contractAddresses as any)[chainId];
+      // const contractAddress = (contractAddresses as any)[chainId];
 
-      const contract = new ethers.Contract(
-        contractAddress,
-        contractAbi,
-        (signer?.provider as any)?.getSigner()
-      );
-      let tx = await contract.sendToken(
-        ethers.BigNumber.from(price).mul((ethers.BigNumber.from(10)).pow(9)).toString()
-      );
-      await tx.wait();
+      // const contract = new ethers.Contract(
+      //   contractAddress,
+      //   contractAbi,
+      //   (signer?.provider as any)?.getSigner()
+      // );
+      // let tx = await contract.sendToken(
+      //   ethers.BigNumber.from(price).mul((ethers.BigNumber.from(10)).pow(9)).toString()
+      // );
+      // await tx.wait();
+      // console.log('Transfer success')
+
+      if (program && publicKey){
+        await sendToken(price, publicKey, program, owner, connection);
+      }
       console.log('Transfer success')
-
-      await sendToken(price);
 
       await writeBuyDataToDB();
 
@@ -229,7 +274,7 @@ const BuyModal = ({
 
     let params = {
       type: Number(payOption),
-      wallet_address: address,
+      wallet_address: publicKey?.toString(),
       expire_date: await getExpireDate(),
       price: price
     };

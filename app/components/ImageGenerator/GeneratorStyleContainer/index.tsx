@@ -10,12 +10,13 @@ import axios from 'axios';
 import { GeneratorStyleData, UnlimitedTokenAmount } from "../../../utils/constants";
 import { useDappContext } from '../../../utils/Context'
 import { lockIcon, shapeIcon } from '../../../utils/images'
-import { sleep } from '../../../utils/interface';
+// import { sleep } from '../../../utils/interface';
 import { toast } from 'react-toastify'
-import { useAccount, useBalance, useNetwork } from 'wagmi';
+// import { useAccount, useBalance, useNetwork } from 'wagmi';
 import { useState, useEffect } from 'react'
 import { now } from 'moment';
-import { polygonMainnetChainId, bscTestnetChainId, tokenAddresses, bscMainnetChainId } from '../../../utils/config';
+// import { polygonMainnetChainId, bscTestnetChainId, tokenAddresses, bscMainnetChainId } from '../../../utils/config';
+import { useWallet } from "@solana/wallet-adapter-react";
 
 const GeneratorStyleContainer = () => {
     const {
@@ -27,19 +28,21 @@ const GeneratorStyleContainer = () => {
         isBuy, setIsBuy,
         status, setStatus
     } = useDappContext();
-    const { address, } = useAccount();
+    // const { address, } = useAccount();
+    const {publicKey}=useWallet();
+    const address = publicKey ? publicKey.toString() : null;
     const [freeImageAmount, setFreeImageAmount] = useState(0);
     const [paidImageAmount, setPaidImageAmount] = useState(0);
     const [expireDate, setExpireDate] = useState(now());
-    const { chain } = useNetwork();
-    const chainId = chain?.id != undefined ? chain.id :
-        process.env.NEXT_PUBLIC_MAINNET_OR_TESTNET == "mainnet" ? bscMainnetChainId : bscTestnetChainId;
+    // const { chain } = useNetwork();
+    // const chainId = chain?.id != undefined ? chain.id :
+    //     process.env.NEXT_PUBLIC_MAINNET_OR_TESTNET == "mainnet" ? bscMainnetChainId : bscTestnetChainId;
 
-    const { data: balanceOfToken, isError, isLoading } = useBalance({
-        address: address,
-        // @ts-ignore
-        token: tokenAddresses[chainId],
-    })
+    // const { data: balanceOfToken, isError, isLoading } = useBalance({
+    //     address: address,
+    //     // @ts-ignore
+    //     token: tokenAddresses[chainId],
+    // })
 
     useEffect(() => {
         if (address) {
@@ -62,7 +65,7 @@ const GeneratorStyleContainer = () => {
     }
 
     useEffect(() => {
-        if (address && Number(balanceOfToken?.formatted) >= UnlimitedTokenAmount) {
+        if (address && 0 >= UnlimitedTokenAmount) {
             setStatus("Unlimited Access");
             setExpireDate(Date.parse(getExpireDate()));
             checkUser()
@@ -89,7 +92,7 @@ const GeneratorStyleContainer = () => {
                 setPaidImageAmount(response.data.paid_image_amount);
                 setExpireDate(Date.parse(response.data.expire_date));
 
-                if (address && Number(balanceOfToken?.formatted) >= UnlimitedTokenAmount) {
+                if (address && 0 >= UnlimitedTokenAmount) {
                     setStatus("Unlimited Access");
                     setExpireDate(Date.parse(getExpireDate()));
                 } else if (Date.parse(response.data.expire_date) > now()) {

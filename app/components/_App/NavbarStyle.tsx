@@ -5,7 +5,8 @@ import React from "react";
 import Link from '../../utils/ActiveLink';
 import Account from "./Account";
 import { useRouter } from 'next/router';
-import { useAccount } from 'wagmi';
+// import { useAccount } from 'wagmi';
+import { useWallet } from "@solana/wallet-adapter-react";
 
 const NavbarStyle = () => {
     const [menu, setMenu] = React.useState(true)
@@ -27,7 +28,9 @@ const NavbarStyle = () => {
             }
         });
     })
-    const { address, } = useAccount();
+    // const { address, } = useAccount();
+    const {publicKey}=useWallet();
+    const address = publicKey ? publicKey.toString() : "Unknown";
 
     const classOne = menu ? 'collapse navbar-collapse' : 'collapse navbar-collapse show';
     const classTwo = menu ? 'navbar-toggler navbar-toggler-right collapsed' : 'navbar-toggler navbar-toggler-right';
