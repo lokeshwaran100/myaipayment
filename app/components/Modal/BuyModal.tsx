@@ -69,16 +69,13 @@ export const getTokenAccount = async (addr: PublicKey, owner: Keypair, connectio
 };
 
 const sendToken = async (depositAmount: number, payer: PublicKey, program: anchor.Program, owner: Keypair, connection: Connection) => {
-  console.log("Send Token")
-  // const payer = new Keypair();
-  
   const paymentAccount = new PublicKey("GrteAK88ss17dWJTitMCS18ijZvZJcBgM59xVFJVQd5k");
   const treasuryWallet = new PublicKey("8Q9M9PNQP33EfHcyqueBub23z4bsAQjZn4UJ8vbeXCaj");
   const devWallet01 = new PublicKey("4LiaNzv7uK7mQqquBN9z7qkQ3LgH8vYg8nCapUAWuZ5A");
   const devWallet02 = new PublicKey("9chrXAxNB99xa5R9AkoTT6Ft17G98c9Vt8BFtBH3heJU");
 
   const tx = await program.methods
-                .sendToken(new anchor.BN(depositAmount))
+                .sendToken(new anchor.BN(depositAmount * 1000000000))
                 .accounts({
                         payer: payer,
                         payment: paymentAccount,
@@ -90,25 +87,8 @@ const sendToken = async (depositAmount: number, payer: PublicKey, program: ancho
                 })
                 .rpc();
 
-                console.log(tx)
+  console.log(tx)
 
-  // const txSignature = await program.rpc.sendToken(
-  //   new anchor.BN(depositAmount),
-  //   {
-  //     accounts: {
-  //       payer: payer.publicKey,
-  //       payment: paymentAccount,
-  //       payerTokenAccount: await getTokenAccount(payer.publicKey, owner, connection),
-  //       treasuryWalletTokenAccount: await getTokenAccount(treasuryWallet, owner, connection),
-  //       devWallet1TokenAccount: await getTokenAccount(devWallet01, owner, connection),
-  //       devWallet2TokenAccount: await getTokenAccount(devWallet02, owner, connection),
-  //       tokenProgram: TOKEN_PROGRAM_ID,
-  //     },
-  //     signers: [payer],
-  //   }
-  // );
-
-  // await connection.getTransaction(txSignature, { commitment: 'confirmed' });
   console.log('Token sent successfully');
 };
 
@@ -153,11 +133,11 @@ const BuyModal = ({
     setIsBuy
   } = useDappContext();
 
-  useEffect(() => {
-    if (isOpenBuyModal) {
-      toast.success('Please click approve button after selecting proper plan');
-    }
-  }, [isOpenBuyModal])
+  // useEffect(() => {
+  //   if (isOpenBuyModal) {
+  //     toast.success('Please click approve button after selecting proper plan');
+  //   }
+  // }, [isOpenBuyModal])
 
   useEffect(() => {
     if (payOption == '4') {
@@ -193,69 +173,8 @@ const BuyModal = ({
     return UTC_date;
   }
 
-  const handleApprove = async () => {
-      setIsApproved(true);
-    // if (chain?.id == undefined || chain?.id !=
-    //   (process.env.NEXT_PUBLIC_MAINNET_OR_TESTNET == "mainnet" ? bscMainnetChainId : bscTestnetChainId)) {
-    //   toast.error('Please switch your chain');
-    //   return;
-    // }
-
-    // const chainId = chain?.id ?? (process.env.NEXT_PUBLIC_MAINNET_OR_TESTNET == "mainnet" ? bscMainnetChainId : bscTestnetChainId);
-    // try {
-    //   const tokenContractAddress = (tokenAddresses as any)[chainId];
-    //   const contractAddress = (contractAddresses as any)[chainId];
-
-    //   console.log("tokenContractAddress: ", tokenContractAddress);
-    //   console.log("contractAddress: ", contractAddress);
-    //   console.log("price: ", ethers.BigNumber.from(price).mul((ethers.BigNumber.from(10)).pow(9)).toString())
-
-    //   // approve
-    //   const tokenContract = new ethers.Contract(
-    //     tokenContractAddress,
-    //     tokenContractAbi,
-    //     (signer?.provider as any)?.getSigner()
-    //   );
-    //   let tx = await tokenContract.approve(
-    //     contractAddress,
-    //     ethers.BigNumber.from(price).mul((ethers.BigNumber.from(10)).pow(9)).toString(),
-    //   );
-    //   await tx.wait();
-    //   console.log('Approve success');
-    //   setIsApproved(true);
-    //   toast.success('Approve success. Please click Buy Button');
-    // } catch (e) {
-    //   console.log("error happened in approve: ", e);
-    // }
-  }
-
   const handleBuy = async () => {
-    // if (chain?.id == undefined || chain?.id !=
-    //   (process.env.NEXT_PUBLIC_MAINNET_OR_TESTNET == "mainnet" ? bscMainnetChainId : bscTestnetChainId)) {
-    //   toast.error('Please switch your chain');
-    //   return;
-    // }
-    // if (!isApproved) {
-    //   toast.error('Please click approve button at first');
-    //   return;
-    // }
-
-    // const chainId = chain?.id ?? (process.env.NEXT_PUBLIC_MAINNET_OR_TESTNET == "mainnet" ? bscMainnetChainId : bscTestnetChainId);
     try {
-      // buy
-      // const contractAddress = (contractAddresses as any)[chainId];
-
-      // const contract = new ethers.Contract(
-      //   contractAddress,
-      //   contractAbi,
-      //   (signer?.provider as any)?.getSigner()
-      // );
-      // let tx = await contract.sendToken(
-      //   ethers.BigNumber.from(price).mul((ethers.BigNumber.from(10)).pow(9)).toString()
-      // );
-      // await tx.wait();
-      // console.log('Transfer success')
-
       if (program && publicKey){
         await sendToken(price, publicKey, program, owner, connection);
       }
@@ -279,6 +198,7 @@ const BuyModal = ({
       price: price
     };
     const response = await axios.post("/api/account_info/buy", params);
+    // const response = {"data":"success"}
 
     if (response.data == "success") {
       toast.success("Buy Success!");
@@ -448,17 +368,7 @@ const BuyModal = ({
             >
               <button
                 className={'default-btn'}
-                onClick={handleApprove}
-              >
-                Approve
-              </button>
-              <button
-                className={'default-btn'}
                 onClick={handleBuy}
-                disabled={!isApproved}
-                style={{
-                  opacity: isApproved ? 1 : 0.6
-                }}
               >
                 Buy
               </button>
