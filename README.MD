@@ -1,8 +1,6 @@
-Solana SPL Token Creation and Management
+# Solana SPL Token Creation and Management
 
 This guide explains the commands required to create and manage a Solana SPL token.
-
-Steps
 
 1. Create a New Token
 
