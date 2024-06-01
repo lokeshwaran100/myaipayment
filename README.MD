@@ -3,7 +3,6 @@
 This guide explains the commands required to create and manage a Solana SPL token.
 
 1. Create a New Token
-
 To create a new token, use the following command:
 spl-token create-token
 This command generates a new token and returns its mint key. In this example, let's assume the token mint key is ExwSdKk455aTyJ6poApJ4gVCrS57vyexGDDc6qeGGPob.
