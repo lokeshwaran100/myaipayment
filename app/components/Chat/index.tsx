@@ -4,7 +4,8 @@ import {
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { toast } from 'react-toastify'
-import { useAccount } from 'wagmi';
+// import { useAccount } from 'wagmi';
+import { useWallet } from "@solana/wallet-adapter-react";
 import { useDappContext } from '../../utils/Context';
 
 interface ChatProps {
@@ -16,7 +17,9 @@ const Chat = (props: ChatProps) => {
         isBuy, setIsBuy,
         status, setStatus
     } = useDappContext();
-    const { address, } = useAccount();
+    // const { address, } = useAccount();
+    const {publicKey}=useWallet();
+    const address = publicKey ? publicKey.toString() : null;
     
     const [messages, setMessages] = useState([
         { role: "assistant", content: "Hi, My Name is MyAi." },
