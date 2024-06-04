@@ -1,6 +1,7 @@
 import {
     Image,
 } from '@chakra-ui/react';
+import { useState } from 'react';
 import React from "react";
 import Link from '../../utils/ActiveLink';
 import Account from "./Account";
@@ -30,7 +31,6 @@ const NavbarStyle = () => {
     })
     // const { address, } = useAccount();
     const {publicKey}=useWallet();
-    const address = publicKey ? publicKey.toString() : "Unknown";
 
     const classOne = menu ? 'collapse navbar-collapse' : 'collapse navbar-collapse show';
     const classTwo = menu ? 'navbar-toggler navbar-toggler-right collapsed' : 'navbar-toggler navbar-toggler-right';
@@ -44,7 +44,7 @@ const NavbarStyle = () => {
 
                             <Link href="/">
                                 <a className="navbar-brand">
-                                    <Image src="/images/logo.png" alt="logo" opacity={(address && window.innerWidth < 540 && (router.pathname.includes('/image-ai') || router.pathname.includes('/chat-ai'))) ? '0' : '1'} />
+                                    <Image src="/images/logo.png" alt="logo" opacity={(publicKey && window.innerWidth < 540 && (router.pathname.includes('/image-ai') || router.pathname.includes('/chat-ai'))) ? '0' : '1'} />
                                 </a>
                             </Link>
 

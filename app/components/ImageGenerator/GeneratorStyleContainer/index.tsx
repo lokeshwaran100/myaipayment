@@ -30,7 +30,6 @@ const GeneratorStyleContainer = () => {
     } = useDappContext();
     // const { address, } = useAccount();
     const {publicKey}=useWallet();
-    const address = publicKey ? publicKey.toString() : null;
     const [freeImageAmount, setFreeImageAmount] = useState(0);
     const [paidImageAmount, setPaidImageAmount] = useState(0);
     const [expireDate, setExpireDate] = useState(now());
@@ -45,16 +44,16 @@ const GeneratorStyleContainer = () => {
     // })
 
     useEffect(() => {
-        if (address) {
+        if (publicKey) {
             getInfoData();
         }
     }, []);
 
     useEffect(() => {
-        if (address) {
+        if (publicKey) {
             getInfoData();
         }
-    }, [address, isBuy]);
+    }, [publicKey, isBuy]);
 
     const getExpireDate = () => {
         let expire_date = new Date(now());
@@ -65,15 +64,17 @@ const GeneratorStyleContainer = () => {
     }
 
     useEffect(() => {
-        if (address && 0 >= UnlimitedTokenAmount) {
+        if (publicKey && 10000 >= UnlimitedTokenAmount) {
             setStatus("Unlimited Access");
             setExpireDate(Date.parse(getExpireDate()));
             checkUser()
         }
-    }, [address]);
+    }, [publicKey]);
 
     const checkUser = async () => {
-        let params = { wallet_address: address };
+        let params = {}
+        if(publicKey)
+            params = { wallet_address: publicKey.toString() };
         const response = await axios.post("/api/account_info/get", params);
         if (!(response.data.free_image_amount >= 0)) {
             await axios.post("/api/account_info/signup", params);
@@ -85,14 +86,16 @@ const GeneratorStyleContainer = () => {
     }
 
     const getInfoData = async () => {
-        let params = { wallet_address: address };
+        let params = {}
+        if(publicKey)
+            params = { wallet_address: publicKey.toString() };
         await axios.post("/api/account_info/get", params)
             .then(response => {
                 setFreeImageAmount(response.data.free_image_amount);
                 setPaidImageAmount(response.data.paid_image_amount);
                 setExpireDate(Date.parse(response.data.expire_date));
 
-                if (address && 0 >= UnlimitedTokenAmount) {
+                if (publicKey && 10000 >= UnlimitedTokenAmount) {
                     setStatus("Unlimited Access");
                     setExpireDate(Date.parse(getExpireDate()));
                 } else if (Date.parse(response.data.expire_date) > now()) {
@@ -114,7 +117,7 @@ const GeneratorStyleContainer = () => {
     const imageGenerate = async () => {
         // e.preventDefault();
         // axios.post()
-        if (address) {
+        if (publicKey) {
             // if (GeneratorStyleData[styleId].isLocked == true && styleId > 9) {
             //     if (paidImageAmount > 0 || expireDate >= now()) {
             //         const response = await fetch("/api/replicate_predictions", {
@@ -156,7 +159,7 @@ const GeneratorStyleContainer = () => {
             //         if (expireDate >= now()) {
 
             //         } else if (paidImageAmount > 0) {
-            //             let params = { wallet_address: address, type: 1 };
+            //             let params = { wallet_address: publicKey.toString(), type: 1 };
             //             await axios.post("/api/account_info/generated", params);
             //         }
 
@@ -178,11 +181,11 @@ const GeneratorStyleContainer = () => {
                     if (expireDate >= now()) {
 
                     } else if (freeImageAmount > 0) {
-                        let params = { wallet_address: address, type: 1 };
+                        let params = { wallet_address: publicKey.toString(), type: 1 };
                         await axios.post("/api/account_info/generated", params);
                         getInfoData();
                     } else if (paidImageAmount > 0) {
-                        let params = { wallet_address: address, type: 2 };
+                        let params = { wallet_address: publicKey.toString(), type: 2 };
                         await axios.post("/api/account_info/generated", params);
                         getInfoData();
                     }
