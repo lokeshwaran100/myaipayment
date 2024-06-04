@@ -21,6 +21,7 @@ export default async function handler(req, res) {
                         paid_image_amount: true,
                     },
                 });
+
                 const response = await prisma.info.update({
                     where: { wallet_address: wallet_address },
                     data: {

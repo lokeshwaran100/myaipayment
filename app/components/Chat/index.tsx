@@ -19,7 +19,6 @@ const Chat = (props: ChatProps) => {
     } = useDappContext();
     // const { address, } = useAccount();
     const {publicKey}=useWallet();
-    const address = publicKey ? publicKey.toString() : null;
     
     const [messages, setMessages] = useState([
         { role: "assistant", content: "Hi, My Name is MyAi." },
@@ -33,7 +32,7 @@ const Chat = (props: ChatProps) => {
     const [version, setVersion] = useState<string>();
 
     useEffect(() => {
-        if (address) {
+        if (publicKey) {
             getInfoData();
         }
     }, []);
@@ -51,17 +50,19 @@ useEffect(() => {
 }, [props]);
 
     useEffect(() => {
-        if (address) {
+        if (publicKey) {
             getInfoData();
         }
-    }, [address, isBuy]);
+    }, [publicKey, isBuy]);
 
     const minsToTimeInfo = (mins: number) => {
         return "Left " + Math.floor(mins / 60) + " hours: " + mins % 60 + " mins";
     }
 
     const getInfoData = async () => {
-        let params = { wallet_address: address };
+        let params = {}
+        if(publicKey)
+            params = { wallet_address: publicKey.toString() };
         await axios.post("/api/account_info/get", params)
             .then(response => {
                 setFreeChatTime(response.data.free_chat_time);
@@ -84,11 +85,11 @@ useEffect(() => {
 
     const chatTimeUpdate = async () => {
         if (freeChatTime > 0) {
-            let params = { wallet_address: address, type: 3 };
+            let params = { wallet_address: publicKey?.toString(), type: 3 };
             await axios.post("/api/account_info/generated", params);
             getInfoData();
         } else if (paidChatTime > 0) {
-            let params = { wallet_address: address, type: 4 };
+            let params = { wallet_address: publicKey?.toString(), type: 4 };
             await axios.post("/api/account_info/generated", params);
             getInfoData();
         }
@@ -96,7 +97,7 @@ useEffect(() => {
     }
     const handleSendMessage = async () => {
 
-        if (address) {
+        if (publicKey) {
 
             if (freeChatTime > 0 || paidChatTime > 0) {
 
@@ -144,13 +145,13 @@ useEffect(() => {
     };
 
     useEffect(() => {
-        if (address) {
+        if (publicKey) {
             checkUser();
         }
-    }, [address]);
+    }, [publicKey]);
 
     const checkUser = async () => {
-        let params = { wallet_address: address };
+        let params = { wallet_address: publicKey?.toString() };
         const response = await axios.post("/api/account_info/get", params);
         if (!(response.data.free_image_amount >= 0)) {
             await axios.post("/api/account_info/signup", params);
