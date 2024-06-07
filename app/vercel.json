@@ -1,6 +1,6 @@
 {
     "functions": {
-        "api/**/*": {
+        "api/openAI_predictions/index.js": {
             "maxDuration": 20
         }
     }
