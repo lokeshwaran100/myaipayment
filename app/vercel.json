@@ -4,7 +4,6 @@
       "memory": 3009,
       "maxDuration": 30
     },
-    {
     "app/api/openAI_Chat/*.js": {
       "memory": 3009,
       "maxDuration": 30
