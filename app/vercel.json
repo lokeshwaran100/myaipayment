@@ -1,6 +1,6 @@
 {
   "functions": {
-    "api/openAI_predictions/*.js": {
+    "api/*/*.js": {
       "memory": 3009,
       "maxDuration": 30
     }
